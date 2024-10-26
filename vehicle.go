@@ -46,7 +46,7 @@ func NewVehicle(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Veloci
 				Color:  Color,
 				Scale:  Scale,
 			},
-			SourceRect:  rl.NewRectangle(0, 0, 128, 38),
+			SourceRect:  rl.NewRectangle(0, 0, 64, 64),
 			IsMoving:    false,
 			SpriteFrame: 0,
 		}, SpeedBar: SpeedBar{
@@ -97,12 +97,13 @@ func (vehicle *Vehicle) PhysicsUpdate() {
 
 // Creates and shoots a projectile in the direction of the ship
 func (vehicle *Vehicle) shoot() {
+	offset := rl.NewVector2(vehicle.Position.X-300, vehicle.Position.Y+40)
 	mouse := rl.GetMousePosition()
-	direction := rl.Vector2Subtract(mouse, vehicle.Position)
+	direction := rl.Vector2Subtract(mouse, offset)
 	direction = normalizeVector(direction)
 	newBullet := Projectile{
 		Body:     physics.NewCirclePhysicsBody(vehicle.BulletVelocity, 15, 0),
-		Position: vehicle.Position,
+		Position: offset,
 		Speed:    700,
 		Color:    rl.White,
 	}

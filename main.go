@@ -18,6 +18,9 @@ var screenScale = rl.NewVector2((float32(screenSize.X) / float32(initScreenWidth
 var backgroundImage rl.Texture2D
 var backgroundScale float32
 
+var vehicleTexture rl.Texture2D
+var frameCount int
+
 var audio Audio = NewAudio()
 
 var theme ColorTheme
@@ -46,10 +49,11 @@ func main() {
 	theme = NewColorTheme(rl.NewColor(176, 166, 170, 255), rl.NewColor(145, 63, 86, 255), rl.White)
 	checkResize(&screenSize)
 
-	vehicleTexture := rl.LoadTexture("textures/car.png")
-	DeLorean := NewVehicle(vehicleTexture, rl.White, rl.NewVector2(400, 400), rl.NewVector2(0, 0), 128, 38, 2)
+	vehicleTexture = rl.LoadTexture("textures/delorean.png")
+	DeLorean := NewVehicle(vehicleTexture, rl.White, rl.NewVector2(screenSize.X/8*7, screenSize.Y/2-float32(vehicleTexture.Height/2)), rl.NewVector2(0, 0), float32(vehicleTexture.Width), float32(vehicleTexture.Height), 4)
 
 	checkResize(&screenSize)
+	rl.SetTargetFPS(60)
 	// Main game loop
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -67,7 +71,21 @@ func main() {
 		case HOWTO:
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
+			DeLorean.Position = rl.NewVector2(screenSize.X/8*7, screenSize.Y/2-float32(vehicleTexture.Height/2))
 			DeLorean.DrawCharacter()
+			DeLorean.Sprite.SourceRect.X = DeLorean.Sprite.SourceRect.Width * float32(DeLorean.Sprite.SpriteFrame)
+			frameCount++
+			if DeLorean.Sprite.SpriteFrame > 2 {
+				DeLorean.Sprite.SpriteFrame = 0
+				DeLorean.Sprite.SourceRect = rl.NewRectangle(0, 0, 64, 64)
+			}
+			if frameCount%10 == 1 {
+				DeLorean.Sprite.SpriteFrame++
+
+			}
+			if frameCount == 30 {
+				frameCount = 0
+			}
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				DeLorean.shoot()
 			}
