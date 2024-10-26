@@ -1,15 +1,21 @@
 package renderer
 
 import (
-	"main/physics"
-
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type SpriteRenderer struct {
 	Sprite rl.Texture2D
 	Color  rl.Color
+	Angle  float32
 	Scale  float32
+}
+
+type CharacterSprite struct {
+	Render      SpriteRenderer
+	SourceRect  rl.Rectangle
+	IsMoving    bool
+	SpriteFrame int
 }
 
 func (renderer *SpriteRenderer) Draw(Position rl.Vector2, angle float32) {
@@ -22,13 +28,13 @@ func (renderer *SpriteRenderer) Draw(Position rl.Vector2, angle float32) {
 }
 
 // Display entity with rectangle hit box
-func DrawRectEntity(body *physics.RectangleBody, renderer *SpriteRenderer, Width, Height, angle float32) {
-	renderer.Draw(body.Position, angle)
+func DrawRectEntity(position rl.Vector2, renderer *SpriteRenderer, Width, Height, angle float32) {
+	renderer.Draw(position, angle)
 }
 
 // Display entity with circle hit box
-func DrawCircleEntity(body *physics.CircleBody, renderer *SpriteRenderer, angle float32) {
-	renderer.Draw(body.Position, angle)
+func DrawCircleEntity(position rl.Vector2, renderer *SpriteRenderer, angle float32) {
+	renderer.Draw(position, angle)
 	// renderer.DrawCircleBoundary(body.Position, body.Radius)
 }
 

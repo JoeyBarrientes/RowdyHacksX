@@ -25,7 +25,7 @@ func (pb *ProgressBar) SetProgress(newProgress float32) {
 func (pb ProgressBar) DrawBar() {
 
 	bothBorderEdges := pb.BorderThickness * 2
-	rl.DrawRectangle(pb.X, pb.Y, pb.Width, pb.Height, pb.colorTheme.baseColor)
+	rl.DrawRectangle(pb.X, pb.Y, pb.Width, pb.Height, rl.Black)
 
 	// Draws inner progress bar with an X and Y offset, and decreased Width and Height
 	// to make the outer progress bar rectangle look like the bar outline
@@ -33,7 +33,7 @@ func (pb ProgressBar) DrawBar() {
 		pb.Y+pb.BorderThickness,
 		int32(pb.progress*(float32(pb.Width)-float32(bothBorderEdges))),
 		pb.Height-bothBorderEdges,
-		pb.colorTheme.accentColor)
+		pb.colorTheme.blueBaseColor)
 }
 
 func NewProgressBar(newX, newY, newBorderThickness, newWidth, newHeight int32, newTheme *ColorTheme) ProgressBar {

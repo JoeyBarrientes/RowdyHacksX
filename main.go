@@ -9,7 +9,6 @@ import (
 )
 
 // Global Variables
-// Global Variables
 var initScreenWidth int32 = 1920
 var initScreenHeight int32 = 1080
 var screenSize rl.Vector2 = rl.NewVector2(float32(initScreenWidth), float32(initScreenHeight))
@@ -42,13 +41,15 @@ func main() {
 	// Game variable initializations
 	rl.InitWindow(initScreenWidth, initScreenHeight, "Game")
 	rl.SetWindowState(rl.FlagWindowResizable)
-
 	rl.InitAudioDevice()
 	audio.loadAudio()
-
 	theme = NewColorTheme(rl.NewColor(176, 166, 170, 255), rl.NewColor(145, 63, 86, 255), rl.White)
 	checkResize(&screenSize)
 
+	vehicleTexture := rl.LoadTexture("textures/car.png")
+	DeLorean := NewVehicle(vehicleTexture, rl.White, rl.NewVector2(400, 400), rl.NewVector2(0, 0), 128, 38, 2)
+
+	checkResize(&screenSize)
 	// Main game loop
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -66,7 +67,19 @@ func main() {
 		case HOWTO:
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
+			DeLorean.DrawCharacter()
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+				DeLorean.shoot()
+			}
 
+			// if rl.IsKeyPressed(rl.KeySpace) {
+			DeLorean.decreaseSpeed()
+			// }
+
+			DeLorean.drawBullets()
+			DeLorean.updateBullets()
+			DeLorean.despawnBullets()
+			DeLorean.updateSpeed()
 			audio.checkMute()
 		case GAMEOVER: // Game Lose State
 			displayGameOver()
@@ -82,8 +95,54 @@ func main() {
 	rl.CloseWindow()
 }
 
+// Implements title screen and UI elements
 func displayTitleScreen() {
 
+	title := "Route 88"
+	titleWidth := rl.MeasureText(title, 50)
+	rl.DrawText(title,
+		int32(screenSize.X)/2-(titleWidth/2),
+		int32(screenSize.Y)/4-(50/2),
+		50, rl.White)
+
+	playButton := NewButton(0, 0, 400, 100, 0.1, 0, 0, TITLE, GAMEPLAY)
+	playButton.X = int32(screenSize.X)/2 - playButton.Width/2
+	playButton.Y = int32(screenSize.Y/2.5) - playButton.Height/2
+	playButton.SetText("Play", 50)
+	playTextWidth := rl.MeasureText(playButton.text, playButton.textSize)
+	rl.DrawText(playButton.text,
+		playButton.X+(playButton.Width/2)-(playTextWidth/2),
+		playButton.Y+(playButton.Height/2)-(playButton.textSize/2),
+		playButton.textSize,
+		rl.White,
+	)
+
+	// howToButton := NewButton(playButton.X, playButton.Y+150, 400, 100, 0.1, 0, 0, TITLE, HOWTO)
+	// howToButton.SetText("How To Play", 50)
+	// howToTextWidth := rl.MeasureText(howToButton.text, howToButton.textSize)
+	// rl.DrawText(howToButton.text,
+	// 	howToButton.X+(howToButton.Width/2)-(howToTextWidth/2),
+	// 	howToButton.Y+(howToButton.Height/2)-(howToButton.textSize/2),
+	// 	howToButton.textSize,
+	// 	rl.White,
+	// )
+
+	exitButton := NewButton(playButton.X, playButton.Y+150, 400, 100, 0.1, 0, 0, TITLE, EXIT)
+	exitButton.SetText("Exit", 50)
+	exitTextWidth := rl.MeasureText(exitButton.text, exitButton.textSize)
+	rl.DrawText(exitButton.text,
+		exitButton.X+(exitButton.Width/2)-(exitTextWidth/2),
+		exitButton.Y+(exitButton.Height/2)-(exitButton.textSize/2),
+		exitButton.textSize,
+		rl.White,
+	)
+
+	addSwitchScreenAction(&playButton)
+	// addSwitchScreenAction(&howToButton)
+	addSwitchScreenAction(&exitButton)
+	playButton.UpdateButton()
+	// howToButton.UpdateButton()
+	exitButton.UpdateButton()
 }
 
 func displayHowToScreen() {
@@ -107,6 +166,20 @@ func applyVelocityDecay(velocity, decaySpeed float32) float32 {
 			velocity = 0
 		}
 	}
+	return velocity
+}
+
+var growthSpeed float32 = 0.5
+
+// Helper that decreases velocity
+func applyVelocityGrowth(velocity, growthSpeed float32) float32 {
+	if velocity < 2 {
+		velocity += growthSpeed
+		if velocity > 2 {
+			velocity = 2
+		}
+	}
+
 	return velocity
 }
 
