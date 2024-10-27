@@ -52,6 +52,7 @@ var currentLane Lane = TOP
 var score float32 = 0
 var highScore float32 = 0
 var hasSpawned bool = false
+var vehicleRect rl.Rectangle
 
 func main() {
 	// Game variable initializations
@@ -82,6 +83,8 @@ func main() {
 	var scrollingBack float32 = 0.0
 	var scrollingMid float32 = 0.0
 	var scrollingFore float32 = 0.0
+
+	vehicleRect = DeLorean.getRectHitbox()
 
 	checkResize(&screenSize)
 	rl.SetTargetFPS(60)
@@ -121,7 +124,7 @@ func main() {
 			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
 
-			// Draw midground image twice
+			// Draw midzground image twice
 			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
 
@@ -131,6 +134,7 @@ func main() {
 
 			// DeLorean.Position = vehiclePosition
 			DeLorean.DrawCharacter()
+			vehicleRect = DeLorean.getRectHitbox()
 			DeLorean.updateFrame()
 			// DeLorean.updateProjectileFrame()
 			DeLorean.move()
@@ -138,15 +142,20 @@ func main() {
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				DeLorean.shoot()
 			}
+			rl.DrawRectangleLines(int32(vehicleRect.X), int32(vehicleRect.Y), int32(vehicleRect.Width), int32(vehicleRect.Height), rl.White)
 
 			spawnEnemies(&enemies, &hasSpawned, enemyTextures, &DeLorean)
 			drawEnemies(enemies)
 			moveEnemies(&enemies)
+			checkEnemyPlayerCollision(&enemies, &DeLorean, vehicleRect)
+			checkEnemyProjectileCollision(&enemies, &DeLorean)
 
 			// if rl.IsKeyPressed(rl.KeySpace) {
 			DeLorean.decreaseSpeed()
+
+			enemies.updateEnemyFrame()
 			// }
-			fmt.Println(DeLorean.Position.Y)
+			// fmt.Println(DeLorean.Position.Y)
 
 			DeLorean.drawBullets()
 			DeLorean.updateBullets()
@@ -179,7 +188,7 @@ func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture
 	// }
 
 	// Check the current game time to control enemy spawn frequency
-	if int(rl.GetTime())%8 == 1 {
+	if int(rl.GetTime())%4 == 1 {
 		if !*hasSpawned {
 			var sprite rl.Texture2D
 			spawnPosition := rl.NewVector2(-50, float32(730+130*randLane))
@@ -187,8 +196,9 @@ func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture
 			if randEnemy == 0 { // Create bat enemy
 				sprite = enemyTextures[0]
 				// for i := 0; i <= randAmount; i++ {
-				libyan := NewShootingEnemy(sprite, rl.White, spawnPosition, rl.NewVector2(0, 0), 45*screenScale.X, 3*screenScale.X)
+				libyan := NewShootingEnemy(sprite, rl.White, spawnPosition, rl.NewVector2(0, 0), 120*screenScale.X, 3*screenScale.X, Lane(randLane))
 				// libyan.Position = rl.NewVector2(float32(libyan.XOffset), vehicle.Position.Y)
+				fmt.Println(libyan.Lane)
 				enemies.Shooting = append(enemies.Shooting, libyan)
 				// }
 			}
@@ -272,14 +282,20 @@ func moveEnemies(enemies *Enemies) {
 }
 
 // Handles player and enemy collision, and applies damage and despawns enemy if so
-func checkEnemyPlayerCollision(enemies *Enemies, DeLorean *Vehicle, knightRect rl.Rectangle) {
+func checkEnemyPlayerCollision(enemies *Enemies, DeLorean *Vehicle, vehicleRect rl.Rectangle) {
 	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
 		libyan := &enemies.Shooting[i]
-		if rl.CheckCollisionCircleRec(libyan.Position, libyan.Body.Radius, knightRect) {
+		if libyan.Lane == DeLorean.Lane {
+			libyan.Sprite.Render.Color = rl.White
+		} else {
+			libyan.Sprite.Render.Color = rl.DarkGray
+		}
+		if rl.CheckCollisionCircleRec(rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)), libyan.Body.Radius, vehicleRect) && (libyan.Lane == DeLorean.Lane) {
 			// rl.PlaySound(audio.Sounds["damaged"])
 			// knight.Health -= bat.Damage
 			// knight.Health = rl.Clamp(knight.Health, 0, 100)
 			// *healthTracker = knight.Health / 100
+			DeLorean.SlowingDown = true
 
 			enemies.Shooting = append(enemies.Shooting[:i], enemies.Shooting[i+1:]...) // Remove Enemy after collision
 		}
@@ -296,6 +312,23 @@ func checkEnemyPlayerCollision(enemies *Enemies, DeLorean *Vehicle, knightRect r
 	// 		enemies.Zombies = append(enemies.Zombies[:i], enemies.Zombies[i+1:]...) // Remove Enemy after collision
 	// 	}
 	// }
+}
+
+// Handles reflected projectile and bat collision, despawns them, and chance of food spawn
+func checkEnemyProjectileCollision(enemies *Enemies, DeLorean *Vehicle) {
+
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+		for j := len(DeLorean.Bullets) - 1; j >= 0; j-- {
+			bullet := &(DeLorean.Bullets)[j]
+			if rl.CheckCollisionCircles(rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)),
+				libyan.Body.Radius, bullet.Position, bullet.Body.Radius) && libyan.Lane == bullet.Lane {
+				DeLorean.Bullets = append(DeLorean.Bullets[:j], DeLorean.Bullets[j+1:]...)
+				enemies.Shooting = append(enemies.Shooting[:i], enemies.Shooting[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 // Implements title screen and UI elements

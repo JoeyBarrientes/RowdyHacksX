@@ -12,6 +12,7 @@ type Projectile struct {
 	Position rl.Vector2
 	Speed    float32
 	Color    rl.Color
+	Lane
 }
 
 type SpriteProjectile struct {
@@ -23,9 +24,9 @@ type SpriteProjectile struct {
 }
 
 // Initializes Projectile entity
-func (p *Projectile) NewProjectile(Position rl.Vector2, Velocity rl.Vector2, Speed float32, Radius float32, Angle float32, color rl.Color) Projectile {
+func (p *Projectile) NewProjectile(Position rl.Vector2, Velocity rl.Vector2, Speed float32, Radius float32, Angle float32, color rl.Color, Lane Lane) Projectile {
 	pb := physics.NewCirclePhysicsBody(Velocity, Radius, Angle)
-	nb := Projectile{Body: pb, Position: Position, Speed: Speed, Color: color}
+	nb := Projectile{Body: pb, Position: Position, Speed: Speed, Color: color, Lane: Lane}
 
 	return nb
 }

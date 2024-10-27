@@ -27,6 +27,7 @@ type Enemy struct {
 	// DropChance   float32
 	XOffset int32
 	YOffset int32
+	Lane
 }
 
 type Normal struct {
@@ -97,7 +98,7 @@ type Shooting struct {
 // }
 
 // Initializes Bat entity
-func NewShootingEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Velocity rl.Vector2, Radius float32, Scale float32) Shooting {
+func NewShootingEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Velocity rl.Vector2, Radius float32, Scale float32, Lane Lane) Shooting {
 	newShooting := Shooting{
 		Enemy: Enemy{
 			Body: physics.CircleBody{
@@ -124,6 +125,7 @@ func NewShootingEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, 
 			// DropChance:   rand.Float32(),
 			XOffset: -50 - int32(rand.Int32N(250)),
 			YOffset: int32(screenSize.Y) - (int32(rand.Int32N(int32(200*screenScale.Y)) + 100)),
+			Lane:    Lane,
 		},
 		Projectile:    []Projectile{},
 		shootTimer:    0,
@@ -152,6 +154,7 @@ func NewNormalEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Ve
 				SpriteFrame: 0,
 			},
 			// Damage:       10,
+			Position:     Position,
 			Health:       100,
 			IsDeflecting: false,
 			DeflectTime:  0,
@@ -169,6 +172,7 @@ func (enemy *Enemy) DrawSprite() {
 	rl.DrawTexturePro(enemy.Sprite.Render.Sprite, enemy.Sprite.SourceRect,
 		destRect,
 		origin, enemy.Sprite.Render.Angle, enemy.Sprite.Render.Color)
+	// rl.DrawCircle(int32(enemy.Position.X-float32(enemy.Sprite.Render.Sprite.Width/5*4)), int32(enemy.Position.Y+float32(enemy.Sprite.Render.Sprite.Height)), enemy.Body.Radius, rl.White)
 }
 
 func (enemy *Enemy) VelocityTick() {
@@ -180,6 +184,45 @@ func (enemy *Enemy) PhysicsUpdate() {
 	enemy.VelocityTick()
 
 }
+
+func (enemies *Enemies) updateEnemyFrame() {
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+
+		libyan.Sprite.SourceRect.X = libyan.Sprite.SourceRect.Width * float32(libyan.Sprite.SpriteFrame)
+		if libyan.Sprite.SpriteFrame > 3 {
+			libyan.Sprite.SpriteFrame = 0
+			libyan.Sprite.SourceRect = rl.NewRectangle(0, 0, 64, 64)
+
+		}
+		if frameCount%10 == 1 {
+			libyan.Sprite.SpriteFrame++
+
+		}
+		// if frameCount%18 == 1 {
+		// 	bullet.Sprite.SpriteFrame++
+
+		// }
+	}
+
+}
+
+// func (enemy *Enemy) getRectHitbox() rl.Rectangle {
+// 	Scale := enemy.Sprite.Render.Scale
+// 	X := enemy.Position.X
+// 	Y := enemy.Position.Y
+// 	Width := enemy.Body.Width
+// 	Height := enemy.Body.Height
+
+// 	scaledX := (X - (Width*Scale)/2) + 5*Scale
+// 	scaledY := Y - (Height*Scale)/2 + 50*Scale
+// 	scaledWidth := (Width * Scale) - 100*Scale
+// 	scaledHeight := Height*Scale - 20*Scale
+
+// 	hitBoxRect := rl.NewRectangle(scaledX, scaledY, scaledWidth, scaledHeight)
+// 	// rl.DrawRectangle(int32(hitBoxRect.X), int32(hitBoxRect.Y), int32(hitBoxRect.Width), int32(hitBoxRect.Height), rl.White)
+// 	return hitBoxRect
+// }
 
 // func (enemy *Enemy) Draw() {
 // 	renderer.DrawCircleEntity(enemy.Position, &enemy.Sprite, enemy.Body.Angle)

@@ -21,7 +21,7 @@ type Vehicle struct {
 	Speed          float32
 	Acceleration   float32
 	SpeedBar
-	// Lane
+	Lane
 }
 
 type SpeedBar struct {
@@ -64,7 +64,7 @@ func NewVehicle(Sprite rl.Texture2D, BulletSprite rl.Texture2D, Color rl.Color, 
 		BulletSprite:   BulletSprite,
 		BulletVelocity: rl.NewVector2(100, 100),
 		SlowingDown:    false,
-		// Lane:           0,
+		Lane:           0,
 	}
 	return Vehicle
 }
@@ -129,6 +129,7 @@ func (vehicle *Vehicle) shoot() {
 		Position: offset,
 		Speed:    700,
 		Color:    rl.White,
+		Lane:     vehicle.Lane,
 	}
 	// newBullet := SpriteProjectile{
 	// 	Body: physics.NewCirclePhysicsBody(vehicle.BulletVelocity, 30, 0),
@@ -147,7 +148,7 @@ func (vehicle *Vehicle) shoot() {
 	// 	Speed:    700,
 	// 	Color:    rl.White,
 	// }
-	if currentLane == TOP {
+	if newBullet.Lane == TOP {
 		newBullet.Color = rl.SkyBlue
 	} else {
 		newBullet.Color = rl.LightGray
@@ -209,7 +210,7 @@ func (vehicle *Vehicle) decreaseSpeed() {
 		vehicle.SlowingDown = true
 	}
 	if vehicle.SlowingDown {
-		vehicle.Speed -= 14
+		vehicle.Speed -= 25
 		vehicle.Acceleration = rl.Clamp(vehicle.Acceleration/2, 2, 8)
 		vehicle.SlowingDown = false
 	}
@@ -254,6 +255,24 @@ func (vehicle *Vehicle) updateFrame() {
 	}
 }
 
+// Return and scale player rectangle hitbox
+func (vehicle *Vehicle) getRectHitbox() rl.Rectangle {
+	Scale := vehicle.Sprite.Render.Scale
+	X := vehicle.Position.X
+	Y := vehicle.Position.Y
+	Width := vehicle.Body.Width
+	Height := vehicle.Body.Height
+
+	scaledX := (X - (Width*Scale)/2) + 5*Scale
+	scaledY := Y - (Height*Scale)/2 + 50*Scale
+	scaledWidth := (Width * Scale) - 100*Scale
+	scaledHeight := Height*Scale - 20*Scale
+
+	hitBoxRect := rl.NewRectangle(scaledX, scaledY, scaledWidth, scaledHeight)
+	// rl.DrawRectangle(int32(hitBoxRect.X), int32(hitBoxRect.Y), int32(hitBoxRect.Width), int32(hitBoxRect.Height), rl.White)
+	return hitBoxRect
+}
+
 // func (vehicle *Vehicle) updateProjectileFrame() {
 // 	for i := len(vehicle.Bullets) - 1; i >= 0; i-- {
 // 		bullet := &(vehicle.Bullets)[i]
@@ -279,11 +298,13 @@ func (vehicle *Vehicle) move() {
 	if (rl.IsKeyPressed(rl.KeyS) || rl.IsKeyPressed(rl.KeyDown)) && currentLane != BOTTOM {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y+100, 1)
 		currentLane = BOTTOM
+		vehicle.Lane = BOTTOM
 		fmt.Println("down")
 	}
 	if (rl.IsKeyPressed(rl.KeyW) || rl.IsKeyPressed(rl.KeyUp)) && currentLane != TOP {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y-100, 1)
 		currentLane = TOP
+		vehicle.Lane = TOP
 		fmt.Println("up")
 	}
 }
