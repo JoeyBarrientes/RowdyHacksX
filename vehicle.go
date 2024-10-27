@@ -318,13 +318,13 @@ func (vehicle *Vehicle) getRectHitbox() rl.Rectangle {
 // }
 
 func (vehicle *Vehicle) move() {
-	if (rl.IsKeyPressed(rl.KeyS) || rl.IsKeyPressed(rl.KeyDown)) && currentLane != BOTTOM {
+	if currentLane != BOTTOM && (rl.IsKeyPressed(rl.KeyS) || rl.IsKeyPressed(rl.KeyDown)) {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y+100, 1)
 		currentLane = BOTTOM
 		vehicle.Lane = BOTTOM
 		// fmt.Println("down")
 	}
-	if (rl.IsKeyPressed(rl.KeyW) || rl.IsKeyPressed(rl.KeyUp)) && currentLane != TOP {
+	if currentLane != TOP && (rl.IsKeyPressed(rl.KeyW) || rl.IsKeyPressed(rl.KeyUp)) {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y-100, 1)
 		currentLane = TOP
 		vehicle.Lane = TOP

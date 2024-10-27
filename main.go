@@ -12,8 +12,8 @@ import (
 )
 
 // Global Variables
-var initScreenWidth int32 = 1600
-var initScreenHeight int32 = 900
+var initScreenWidth int32 = 1920
+var initScreenHeight int32 = 1080
 var screenSize rl.Vector2 = rl.NewVector2(float32(initScreenWidth), float32(initScreenHeight))
 var screenScale = rl.NewVector2((float32(screenSize.X) / float32(initScreenWidth)),
 	(float32(screenSize.Y) / float32(initScreenHeight)))
@@ -64,6 +64,7 @@ const (
 
 var currentScreen GameScreen = TITLE
 var currentLane Lane = TOP
+var currentBackground Background = CITY
 
 var score float32 = 0
 var highScore float32 = 0
@@ -89,12 +90,8 @@ func main() {
 	Marty = renderer.NewStillSprite(rl.NewVector2(screenSize.X/2-float32(martyTexture.Width)/2, screenSize.Y/6*4-float32(martyTexture.Height)/2), martyTexture, rl.White, 0, 7)
 
 	backgroundImage = rl.LoadTexture("textures/Bright/City3.png")
-	// backgroundImage = append(backgroundImage, rl.LoadTexture("textures/Bright/City3.png"))
-	// background = append(background, rl.LoadTexture("textures/background.png"))
 	background = rl.LoadTexture("textures/background.png")
-	// midground = append(midground, rl.LoadTexture("textures/middleground.png"))
 	midground = rl.LoadTexture("textures/middleground.png")
-	// foreground = append(foreground, rl.LoadTexture("textures/foreground.png"))
 	foreground = rl.LoadTexture("textures/foreground.png")
 
 	libyanTexture := rl.LoadTexture("textures/enemylibyan.png")
@@ -137,17 +134,17 @@ func main() {
 		checkResize(&screenSize)
 
 		switch currentScreen {
-			case TITLE: 
+		case TITLE:
 			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
-		
+
 			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
-		
+
 			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
-		
-			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
+
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor)
 			displayTitleScreen()
 			audio.checkMute()
 		case HOWTO:
@@ -162,8 +159,8 @@ func main() {
 			// Draw foreground image twice
 			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
-			
-			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
+
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor)
 
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
@@ -234,11 +231,22 @@ func nextHyperjump(DeLorean *Vehicle) {
 	if DeLorean.Hyperjump {
 		fmt.Println("Ready to Jump")
 		if rl.IsKeyPressed(rl.KeySpace) {
-			if Background == CITY {
+			DeLorean.Speed = 0
+			DeLorean.SpeedTracker = 0
+			DeLorean.Acceleration = 1
+			if currentBackground == CITY {
+				currentBackground = PREHISTORIC
 				background = rl.LoadTexture("textures/background-prehistoric.png")
 				midground = rl.LoadTexture("textures/middleground-prehistoric.png")
 				foreground = rl.LoadTexture("textures/foreground-prehistoric.png")
 				backgroundImage = rl.LoadTexture("textures/backgroundImage2.png")
+				DeLorean.Hyperjump = false
+			} else if currentBackground == PREHISTORIC {
+				currentBackground = CITY
+				backgroundImage = rl.LoadTexture("textures/Bright/City3.png")
+				background = rl.LoadTexture("textures/background.png")
+				midground = rl.LoadTexture("textures/middleground.png")
+				foreground = rl.LoadTexture("textures/foreground.png")
 				DeLorean.Hyperjump = false
 			}
 		}
@@ -349,12 +357,12 @@ func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
 			enemyBullet := Projectile{
 				Body:     physics.NewCirclePhysicsBody(rl.NewVector2(100, 0), 15, 0),
 				Position: rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)),
-				Speed:    500,
-				Color:    rl.White,
+				Speed:    600,
+				Color:    rl.Red,
 				Lane:     libyan.Lane,
 			}
 			if enemyBullet.Lane == DeLorean.Lane {
-				enemyBullet.Color = rl.White
+				enemyBullet.Color = rl.Red
 			} else {
 				enemyBullet.Color = rl.DarkGray
 			}
@@ -362,8 +370,8 @@ func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
 			enemyBullet.Body.Velocity.X = enemyBullet.Speed
 			// pr.Body.Velocity.Y = direction.Y * 350
 			libyan.Projectile = append(libyan.Projectile, enemyBullet)
-			enemyBullet.Position.X -= 60
-			libyan.Projectile = append(libyan.Projectile, enemyBullet)
+			// enemyBullet.Position.X -= 35
+			// libyan.Projectile = append(libyan.Projectile, enemyBullet)
 
 			libyan.shootTimer = 0
 
@@ -391,7 +399,7 @@ func updateProjectiles(enemies *Enemies, DeLorean *Vehicle, vehicleRect rl.Recta
 			projectile := &libyan.Projectile[j]
 			projectile.PhysicsUpdate()
 			if projectile.Lane == DeLorean.Lane {
-				projectile.Color = rl.White
+				projectile.Color = rl.Red
 			} else {
 				projectile.Color = rl.DarkGray
 			}
