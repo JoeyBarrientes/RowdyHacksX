@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"strconv"
+	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -122,17 +123,17 @@ func main() {
 		checkResize(&screenSize)
 
 		switch currentScreen {
-			case TITLE: 
+		case TITLE:
 			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
-		
+
 			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
-		
+
 			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
-		
-			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
+
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor)
 			displayTitleScreen()
 			audio.checkMute()
 		case HOWTO:
@@ -147,8 +148,8 @@ func main() {
 			// Draw foreground image twice
 			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
 			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
-			
-			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
+
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor)
 
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
@@ -433,14 +434,22 @@ func checkEnemyProjectileCollision(enemies *Enemies, DeLorean *Vehicle) {
 
 // Implements title screen and UI elements
 func displayTitleScreen() {
-
 	title := "Route 88"
-	titleWidth := rl.MeasureText(title, 50)
-	rl.DrawText(title,
-		int32(screenSize.X)/2-(titleWidth/2),
-		int32(screenSize.Y)/4-(50/2),
-		50, rl.White)
+	baseFontSize := float32(100) // Base font size
+	breathingSpeed := 1.5       // Controls breathing speed
 
+	// Calculate the breathing scale factor
+	elapsed := float64(time.Now().UnixNano()) / 1e9 // Time in seconds
+	scaleFactor := 1.0 + 0.1*float32(math.Sin(float64(breathingSpeed*elapsed)))
+
+	// Calculate current font size and position
+	currentFontSize := int32(baseFontSize * scaleFactor)
+	titleWidth := rl.MeasureText(title, currentFontSize)
+	positionX := int32(screenSize.X)/2 - (titleWidth / 2)
+	positionY := int32(screenSize.Y)/4 - (currentFontSize / 2)
+
+	// Draw the title text with the breathing effect
+	rl.DrawText(title, positionX, positionY, currentFontSize, rl.White)
 	playButton := NewButton(0, 0, 400, 100, 0.1, 0, 0, TITLE, HOWTO)
 	playButton.X = int32(screenSize.X)/2 - playButton.Width/2
 	playButton.Y = int32(screenSize.Y/2.5) - playButton.Height/2
