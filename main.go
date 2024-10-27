@@ -456,22 +456,50 @@ func displayTitleScreen() {
 	exitButton.UpdateButton()
 }
 
+type DialogBox struct {
+	rl.Rectangle
+	text     string
+	textSize float32
+}
+
+var dialogCount int = 0
+
 func displayHowToScreen() {
 	Marty.Draw(0)
-
-	DialogRect := rl.NewRectangle(Marty.Position.X-400, Marty.Position.Y-600, 800, 400)
-	rl.DrawRectangleRounded(DialogRect, 0.5, 1, rl.White)
-	DialogText := "Oh no! The Libyan\n" +
-		"Terrorists have found Doc!\n" +
-		"We need to go help him now!"
-	rl.DrawText(DialogText, DialogRect.ToInt32().X+40, DialogRect.ToInt32().Y+40, 50, rl.Black)
-	if rl.IsKeyPressed(rl.KeySpace) || rl.IsMouseButtonPressed(rl.MouseLeftButton) {
-		DialogText = "Aim with MOUSE\n" +
-			"Press LEFT MOUSE BUTTON to shoot!\n" +
-			"Press W to move one lane up\n!" +
-			"Press S to move one lane down\n!" +
-			"Once 88 MPH\n!"
+	Dialog := DialogBox{
+		Rectangle: rl.NewRectangle(Marty.Position.X-400, Marty.Position.Y-600, 800, 400),
+		text:      "",
+		textSize:  50,
 	}
+
+	if dialogCount == 0 {
+		Dialog.text = "Oh no! The Libyan\n" +
+			"Terrorists have found Doc!\n" +
+			"We need to go help him now!"
+	} else if dialogCount == 1 {
+		Dialog.Rectangle.X -= 150
+		Dialog.Rectangle.Y -= 50
+		Dialog.Width += 300
+		Dialog.Height += 100
+		Dialog.text = "Aim with MOUSE\n" +
+			"Press LEFT MOUSE BUTTON to shoot\n" +
+			"Press W to move one lane up\n" +
+			"Press S to move one lane down\n\n" +
+			"Once 88 MPH has been reached,\n" +
+			"press SPACEBAR to begin the\n" +
+			"hyperjump sequence!"
+	} else if dialogCount == 2 {
+		currentScreen = GAMEPLAY
+	}
+
+	// DialogRect := rl.NewRectangle(Marty.Position.X-400, Marty.Position.Y-600, 800, 400)
+
+	if rl.IsKeyPressed(rl.KeySpace) || rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+		dialogCount++
+	}
+	rl.DrawRectangleRounded(Dialog.Rectangle, 0.5, 1, rl.White)
+	rl.DrawText(Dialog.text, Dialog.Rectangle.ToInt32().X+40, Dialog.Rectangle.ToInt32().Y+40, 50, rl.Black)
+	// rl.DrawText(DialogText, DialogRect.ToInt32().X+40, DialogRect.ToInt32().Y+40, 50, rl.Black)
 }
 
 func displayGameOver() {
