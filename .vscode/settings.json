@@ -3,7 +3,14 @@
         "Astroids",
         "delorean",
         "Despawn",
+        "despawns",
+        "enemylibyan",
+        "hyperjump",
+        "HYPERJUMP",
         "Lorean",
+        "middleground",
+        "midground",
+        "midzground",
         "raylib"
     ]
 }

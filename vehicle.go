@@ -20,6 +20,7 @@ type Vehicle struct {
 	SlowingDown    bool
 	Speed          float32
 	Acceleration   float32
+	Hyperjump      bool
 	SpeedBar
 	Lane
 }
@@ -65,6 +66,7 @@ func NewVehicle(Sprite rl.Texture2D, BulletSprite rl.Texture2D, Color rl.Color, 
 		BulletVelocity: rl.NewVector2(100, 100),
 		SlowingDown:    false,
 		Lane:           0,
+		Hyperjump:      false,
 	}
 	return Vehicle
 }
@@ -148,6 +150,7 @@ func (vehicle *Vehicle) shoot() {
 	// 	Speed:    700,
 	// 	Color:    rl.White,
 	// }
+	// new
 	if newBullet.Lane == TOP {
 		newBullet.Color = rl.SkyBlue
 	} else {
@@ -165,7 +168,14 @@ func (vehicle *Vehicle) drawBullets() {
 	for i := len(vehicle.Bullets) - 1; i >= 0; i-- {
 		bullet := &(vehicle.Bullets)[i]
 		// bullet.DrawSprite()
-		rl.DrawCircleLines(int32(bullet.Position.X), int32(bullet.Position.Y), bullet.Body.Radius, rl.White)
+		// bullet.Lane = vehicle.Lane
+		// bullet.Lane !
+		if bullet.Lane == TOP {
+			bullet.Color = rl.SkyBlue
+		} else {
+			bullet.Color = rl.LightGray
+		}
+		// rl.DrawCircleLines(int32(bullet.Position.X), int32(bullet.Position.Y), bullet.Body.Radius, rl.White)
 		rl.DrawCircle(int32(bullet.Position.X), int32(bullet.Position.Y), bullet.Body.Radius, bullet.Color)
 	}
 }
@@ -202,6 +212,19 @@ func (vehicle *Vehicle) increaseSpeed() {
 		vehicle.Acceleration = rl.Clamp(vehicle.Acceleration+0.5*rl.GetFrameTime(), 0, 12)
 		// fmt.Println(vehicle.Acceleration)
 		vehicle.Speed = rl.Clamp(vehicle.Speed+rl.GetFrameTime()*vehicle.Acceleration, 0, 200)
+	}
+	if vehicle.Speed >= 88 {
+		vehicle.Hyperjump = true
+	}
+}
+
+func (vehicle *Vehicle) nextHyperjump() {
+	if vehicle.Hyperjump {
+		fmt.Println("Ready to Jump")
+		if rl.IsKeyPressed(rl.KeySpace) {
+			vehicle.Hyperjump = false
+		}
+
 	}
 }
 
@@ -269,6 +292,7 @@ func (vehicle *Vehicle) getRectHitbox() rl.Rectangle {
 	scaledHeight := Height*Scale - 20*Scale
 
 	hitBoxRect := rl.NewRectangle(scaledX, scaledY, scaledWidth, scaledHeight)
+
 	// rl.DrawRectangle(int32(hitBoxRect.X), int32(hitBoxRect.Y), int32(hitBoxRect.Width), int32(hitBoxRect.Height), rl.White)
 	return hitBoxRect
 }
@@ -299,12 +323,12 @@ func (vehicle *Vehicle) move() {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y+100, 1)
 		currentLane = BOTTOM
 		vehicle.Lane = BOTTOM
-		fmt.Println("down")
+		// fmt.Println("down")
 	}
 	if (rl.IsKeyPressed(rl.KeyW) || rl.IsKeyPressed(rl.KeyUp)) && currentLane != TOP {
 		vehicle.Position.Y = rl.Lerp(vehicle.Position.Y, vehicle.Position.Y-100, 1)
 		currentLane = TOP
 		vehicle.Lane = TOP
-		fmt.Println("up")
+		// fmt.Println("up")
 	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"main/physics"
+	"main/renderer"
 	"math"
 	"math/rand/v2"
 	"strconv"
@@ -25,6 +26,8 @@ var foreground rl.Texture2D
 
 var vehicleTexture rl.Texture2D
 var frameCount int
+var martyTexture rl.Texture2D
+var Marty renderer.StillSprite
 
 var audio Audio = NewAudio()
 
@@ -36,6 +39,7 @@ const (
 	TITLE GameScreen = iota
 	HOWTO
 	GAMEPLAY
+	HYPERJUMP
 	GAMEOVER
 	EXIT
 )
@@ -54,6 +58,7 @@ var score float32 = 0
 var highScore float32 = 0
 var hasSpawned bool = false
 var vehicleRect rl.Rectangle
+var hyperjump bool
 
 func main() {
 	// Game variable initializations
@@ -68,6 +73,8 @@ func main() {
 	projectileTextures := rl.LoadTexture("textures/projectileBullet.png")
 	vehiclePosition := rl.NewVector2(screenSize.X/8*7, screenSize.Y/9*6-float32(vehicleTexture.Height/2))
 	DeLorean := NewVehicle(vehicleTexture, projectileTextures, rl.White, vehiclePosition, rl.NewVector2(0, 0), float32(vehicleTexture.Width), float32(vehicleTexture.Height), 4)
+	martyTexture = rl.LoadTexture("textures/marty.png")
+	Marty = renderer.NewStillSprite(rl.NewVector2(screenSize.X/2-float32(martyTexture.Width)/2, screenSize.Y/6*4-float32(martyTexture.Height)/2), martyTexture, rl.White, 0, 7)
 
 	backgroundImage = rl.LoadTexture("textures/Bright/City3.png")
 	background = rl.LoadTexture("textures/background.png")
@@ -143,7 +150,7 @@ func main() {
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				DeLorean.shoot()
 			}
-			rl.DrawRectangleLines(int32(vehicleRect.X), int32(vehicleRect.Y), int32(vehicleRect.Width), int32(vehicleRect.Height), rl.White)
+			// rl.DrawRectangleLines(int32(vehicleRect.X), int32(vehicleRect.Y), int32(vehicleRect.Width), int32(vehicleRect.Height), rl.White)
 
 			spawnEnemies(&enemies, &hasSpawned, enemyTextures, &DeLorean)
 			drawEnemies(enemies)
@@ -194,15 +201,14 @@ func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture
 	// }
 
 	// Check the current game time to control enemy spawn frequency
-	if int(rl.GetTime())%4 == 1 {
+	if int(rl.GetTime())%3 == 1 {
 		if !*hasSpawned {
 			var sprite rl.Texture2D
-			spawnPosition := rl.NewVector2(-50, float32(730+130*randLane))
+			spawnPosition := rl.NewVector2(-50, float32(750+130*randLane))
 
 			if randEnemy == 0 { // Create bat enemy
 				sprite = enemyTextures[0]
-				// for i := 0; i <= randAmount; i++ {
-				libyan := NewShootingEnemy(sprite, rl.White, spawnPosition, rl.NewVector2(0, 0), 120*screenScale.X, 3*screenScale.X, Lane(randLane))
+				libyan := NewShootingEnemy(sprite, rl.White, spawnPosition, rl.NewVector2(0, 0), 120*screenScale.X, 2.5*screenScale.X, Lane(randLane))
 				// libyan.Position = rl.NewVector2(float32(libyan.XOffset), vehicle.Position.Y)
 				fmt.Println(libyan.Lane)
 				enemies.Shooting = append(enemies.Shooting, libyan)
@@ -241,24 +247,6 @@ func moveEnemies(enemies *Enemies) {
 	for i := range enemies.Shooting {
 		libyan := &enemies.Shooting[i]
 		libyan.Body.Velocity.X = 150
-		// if !libyan.IsDeflecting {
-		// 	direction := rl.Vector2Subtract(knight.Body.Position, bat.Body.Position)
-		// 	direction = normalizeVector(direction)
-		// 	bat.Body.Velocity.X = direction.X * 150
-		// 	bat.Body.Velocity.Y = direction.Y * 150
-		// } else {
-		// 	bat.DeflectTime += rl.GetFrameTime()
-		// 	decaySpeed := rl.NewVector2(float32(math.Abs(float64(bat.Body.Velocity.X*25))*float64(rl.GetFrameTime())),
-		// 		float32(math.Abs(float64(bat.Body.Velocity.Y*5))*float64(rl.GetFrameTime())))
-		// 	bat.Body.Velocity.X = applyVelocityDecay(bat.Body.Velocity.X, decaySpeed.X)
-		// 	// Y velocity is not changed
-
-		// 	if bat.DeflectTime >= deflectDuration {
-		// 		bat.IsDeflecting = false
-		// 		bat.DeflectTime = 0
-		// 	}
-		// }
-
 		libyan.PhysicsUpdate()
 	}
 
@@ -302,15 +290,22 @@ func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
 			// audio.playWithRandPitch(audio.Sounds["shot"])
 
 			enemyBullet := Projectile{
-				Body:     physics.NewCirclePhysicsBody(rl.NewVector2(100, 0), 20, 0),
+				Body:     physics.NewCirclePhysicsBody(rl.NewVector2(100, 0), 15, 0),
 				Position: rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)),
 				Speed:    500,
-				Color:    rl.DarkGray,
+				Color:    rl.White,
 				Lane:     libyan.Lane,
+			}
+			if enemyBullet.Lane == DeLorean.Lane {
+				enemyBullet.Color = rl.White
+			} else {
+				enemyBullet.Color = rl.DarkGray
 			}
 			// pr := libyan.Projectile.NewProjectile(bat.Body.Position, bat.Body.Velocity, bat.Projectile.Speed, 10, 0, rl.White)
 			enemyBullet.Body.Velocity.X = enemyBullet.Speed
 			// pr.Body.Velocity.Y = direction.Y * 350
+			libyan.Projectile = append(libyan.Projectile, enemyBullet)
+			enemyBullet.Position.X -= 60
 			libyan.Projectile = append(libyan.Projectile, enemyBullet)
 
 			libyan.shootTimer = 0
@@ -345,8 +340,9 @@ func updateProjectiles(enemies *Enemies, DeLorean *Vehicle, vehicleRect rl.Recta
 			}
 
 			if rl.CheckCollisionCircleRec(projectile.Position, projectile.Body.Radius, vehicleRect) && DeLorean.Lane == projectile.Lane {
+				DeLorean.SlowingDown = true
 				libyan.Projectile = append(libyan.Projectile[:j], libyan.Projectile[j+1:]...)
-				DeLorean.decreaseSpeed()
+
 				break
 			}
 		}
@@ -403,6 +399,13 @@ func checkEnemyProjectileCollision(enemies *Enemies, DeLorean *Vehicle) {
 	}
 }
 
+// func checkBulletCollision(enemies *Enemies, DeLorean *Vehicle){
+// 		for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+// 		libyan := &enemies.Shooting[i]
+// 		for j := len(DeLorean.Bullets) - 1; j >= 0; j-- {
+// 			bullet := &(DeLorean.Bullets)[j]
+// }
+
 // Implements title screen and UI elements
 func displayTitleScreen() {
 
@@ -413,7 +416,7 @@ func displayTitleScreen() {
 		int32(screenSize.Y)/4-(50/2),
 		50, rl.White)
 
-	playButton := NewButton(0, 0, 400, 100, 0.1, 0, 0, TITLE, GAMEPLAY)
+	playButton := NewButton(0, 0, 400, 100, 0.1, 0, 0, TITLE, HOWTO)
 	playButton.X = int32(screenSize.X)/2 - playButton.Width/2
 	playButton.Y = int32(screenSize.Y/2.5) - playButton.Height/2
 	playButton.SetText("Play", 50)
@@ -454,7 +457,21 @@ func displayTitleScreen() {
 }
 
 func displayHowToScreen() {
+	Marty.Draw(0)
 
+	DialogRect := rl.NewRectangle(Marty.Position.X-400, Marty.Position.Y-600, 800, 400)
+	rl.DrawRectangleRounded(DialogRect, 0.5, 1, rl.White)
+	DialogText := "Oh no! The Libyan\n" +
+		"Terrorists have found Doc!\n" +
+		"We need to go help him now!"
+	rl.DrawText(DialogText, DialogRect.ToInt32().X+40, DialogRect.ToInt32().Y+40, 50, rl.Black)
+	if rl.IsKeyPressed(rl.KeySpace) || rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+		DialogText = "Aim with MOUSE\n" +
+			"Press LEFT MOUSE BUTTON to shoot!\n" +
+			"Press W to move one lane up\n!" +
+			"Press S to move one lane down\n!" +
+			"Once 88 MPH\n!"
+	}
 }
 
 func displayGameOver() {
