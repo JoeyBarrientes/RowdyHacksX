@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/physics"
 	"math"
 	"math/rand/v2"
 	"strconv"
@@ -133,7 +134,7 @@ func main() {
 			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
 
 			// DeLorean.Position = vehiclePosition
-			DeLorean.DrawCharacter()
+
 			vehicleRect = DeLorean.getRectHitbox()
 			DeLorean.updateFrame()
 			// DeLorean.updateProjectileFrame()
@@ -149,14 +150,19 @@ func main() {
 			moveEnemies(&enemies)
 			checkEnemyPlayerCollision(&enemies, &DeLorean, vehicleRect)
 			checkEnemyProjectileCollision(&enemies, &DeLorean)
+			shootProjectile(&enemies, &DeLorean)
 
 			// if rl.IsKeyPressed(rl.KeySpace) {
 			DeLorean.decreaseSpeed()
 
 			enemies.updateEnemyFrame()
+			drawProjectiles(&enemies, &DeLorean)
+			updateProjectiles(&enemies, &DeLorean, vehicleRect)
+			// for i := range.
 			// }
 			// fmt.Println(DeLorean.Position.Y)
 
+			DeLorean.DrawCharacter()
 			DeLorean.drawBullets()
 			DeLorean.updateBullets()
 			DeLorean.despawnBullets()
@@ -279,6 +285,72 @@ func moveEnemies(enemies *Enemies) {
 
 	// 	zombie.Body.PhysicsUpdate()
 	// }
+}
+
+// rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height))
+// Creates and shoots a projectile from each bat toward the player at a random interval
+func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+		// direction := rl.Vector2Subtract(DeLorean.Position, rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)))
+		// direction = normalizeVector(direction)
+
+		libyan.shootTimer += rl.GetFrameTime()
+
+		// Check if the bat can shoot
+		if libyan.shootTimer >= libyan.shootInterval {
+			// audio.playWithRandPitch(audio.Sounds["shot"])
+
+			enemyBullet := Projectile{
+				Body:     physics.NewCirclePhysicsBody(rl.NewVector2(100, 0), 20, 0),
+				Position: rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)),
+				Speed:    500,
+				Color:    rl.DarkGray,
+				Lane:     libyan.Lane,
+			}
+			// pr := libyan.Projectile.NewProjectile(bat.Body.Position, bat.Body.Velocity, bat.Projectile.Speed, 10, 0, rl.White)
+			enemyBullet.Body.Velocity.X = enemyBullet.Speed
+			// pr.Body.Velocity.Y = direction.Y * 350
+			libyan.Projectile = append(libyan.Projectile, enemyBullet)
+
+			libyan.shootTimer = 0
+
+			// Assign a new random shoot interval between 3 and 5 seconds
+			libyan.shootInterval = 3.0 + rand.Float32()*2.0
+		}
+	}
+}
+
+// Draws each projectile slice element to screen
+func drawProjectiles(enemies *Enemies, DeLorean *Vehicle) {
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+		for _, projectile := range libyan.Projectile {
+			projectile.Draw()
+		}
+	}
+}
+
+func updateProjectiles(enemies *Enemies, DeLorean *Vehicle, vehicleRect rl.Rectangle) {
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+		for j := range libyan.Projectile {
+			// Use a pointer to each projectile to ensure updates apply to the actual object
+			projectile := &libyan.Projectile[j]
+			projectile.PhysicsUpdate()
+			if projectile.Lane == DeLorean.Lane {
+				projectile.Color = rl.White
+			} else {
+				projectile.Color = rl.DarkGray
+			}
+
+			if rl.CheckCollisionCircleRec(projectile.Position, projectile.Body.Radius, vehicleRect) && DeLorean.Lane == projectile.Lane {
+				libyan.Projectile = append(libyan.Projectile[:j], libyan.Projectile[j+1:]...)
+				DeLorean.decreaseSpeed()
+				break
+			}
+		}
+	}
 }
 
 // Handles player and enemy collision, and applies damage and despawns enemy if so
