@@ -287,7 +287,7 @@ func (vehicle *Vehicle) getRectHitbox() rl.Rectangle {
 
 	scaledX := (X - (Width*Scale)/2) + 5*Scale
 	scaledY := Y - (Height*Scale)/2 + 50*Scale
-	scaledWidth := (Width * Scale) - 100*Scale
+	scaledWidth := (Width * Scale) - 130*Scale
 	scaledHeight := Height*Scale - 20*Scale
 
 	hitBoxRect := rl.NewRectangle(scaledX, scaledY, scaledWidth, scaledHeight)

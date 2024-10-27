@@ -28,6 +28,8 @@ var backgroundScale float32
 var background rl.Texture2D
 var midground rl.Texture2D
 var foreground rl.Texture2D
+var routeImage rl.Texture2D
+var route88 Route
 
 var vehicleTexture rl.Texture2D
 var frameCount int
@@ -71,8 +73,12 @@ var score float32 = 0
 var highScore float32 = 0
 var hasSpawned bool = false
 var vehicleRect rl.Rectangle
-var hyperjump bool
 var hudColor rl.Color = rl.NewColor(0, 0, 0, 128)
+
+type Route struct {
+	renderer.CharacterSprite
+	Position rl.Vector2
+}
 
 func main() {
 	// Game variable initializations
@@ -94,6 +100,23 @@ func main() {
 	background = rl.LoadTexture("textures/background.png")
 	midground = rl.LoadTexture("textures/middleground.png")
 	foreground = rl.LoadTexture("textures/foreground.png")
+
+	routeImage = rl.LoadTexture("textures/Route88.png")
+	// route88 = renderer.New(rl.NewVector2(0, 0), routeImage, rl.White, 0, 4)
+	route88 = Route{
+		renderer.CharacterSprite{
+			Render: renderer.SpriteRenderer{
+				Sprite: routeImage,
+				Color:  rl.White,
+				Angle:  0,
+				Scale:  4,
+			},
+			SourceRect:  rl.NewRectangle(0, 0, 64, 64),
+			IsMoving:    false,
+			SpriteFrame: 0,
+		},
+		rl.NewVector2(0, 0),
+	}
 
 	libyanTexture := rl.LoadTexture("textures/enemylibyan.png")
 
@@ -190,7 +213,7 @@ func main() {
 			}
 			// rl.DrawRectangleLines(int32(vehicleRect.X), int32(vehicleRect.Y), int32(vehicleRect.Width), int32(vehicleRect.Height), rl.White)
 
-			spawnEnemies(&enemies, &hasSpawned, enemyTextures, &DeLorean)
+			spawnEnemies(&enemies, &hasSpawned, enemyTextures)
 			drawEnemies(enemies)
 			moveEnemies(&enemies)
 			checkEnemyPlayerCollision(&enemies, &DeLorean, vehicleRect)
@@ -201,7 +224,7 @@ func main() {
 			DeLorean.decreaseSpeed()
 
 			enemies.updateEnemyFrame()
-			drawProjectiles(&enemies, &DeLorean)
+			drawProjectiles(&enemies)
 			updateProjectiles(&enemies, &DeLorean, vehicleRect)
 			nextHyperjump(&DeLorean)
 			// for i := range.
@@ -256,7 +279,7 @@ func nextHyperjump(DeLorean *Vehicle) {
 }
 
 // Spawns bat and zombie entities off screen to the right
-func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture2D, vehicle *Vehicle) {
+func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture2D) {
 	// Gets random number to determine
 	// enemy type and number per spawn occurrence
 	randEnemy := rand.IntN(1)
@@ -383,7 +406,7 @@ func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
 }
 
 // Draws each projectile slice element to screen
-func drawProjectiles(enemies *Enemies, DeLorean *Vehicle) {
+func drawProjectiles(enemies *Enemies) {
 	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
 		libyan := &enemies.Shooting[i]
 		for _, projectile := range libyan.Projectile {
@@ -472,11 +495,38 @@ func checkEnemyProjectileCollision(enemies *Enemies, DeLorean *Vehicle) {
 // 			bullet := &(DeLorean.Bullets)[j]
 // }
 
+func (route *Route) DrawSprite() {
+	destRect := rl.NewRectangle(route.Position.X, route.Position.Y, 100*route.Render.Scale, 100*route.Render.Scale)
+	origin := rl.Vector2Scale(rl.NewVector2(float32(route.Render.Sprite.Width)/2, float32(route.Render.Sprite.Height)/2), route.Render.Scale)
+	rl.DrawTexturePro(route.Render.Sprite, route.SourceRect,
+		destRect,
+		origin, route.Render.Angle, route.Render.Color)
+	// rl.DrawCircle(int32(enemy.Position.X-float32(enemy.Sprite.Render.Sprite.Width/5*4)), int32(enemy.Position.Y+float32(enemy.Sprite.Render.Sprite.Height)), enemy.Body.Radius, rl.White)
+}
+
+func (route *Route) updateRouteFrame() {
+
+	route.SourceRect.X = route.SourceRect.Width * float32(route.SpriteFrame)
+	if route.SpriteFrame > 7 {
+		route.SpriteFrame = 0
+		route.SourceRect = rl.NewRectangle(0, 0, 64, 64)
+
+	}
+	if frameCount%10 == 1 {
+		route.SpriteFrame++
+
+	}
+	// if frameCount%18 == 1 {
+	// 	bullet.Sprite.SpriteFrame++
+
+	// }
+}
+
 // Implements title screen and UI elements
 func displayTitleScreen() {
 	title := "Route 88"
 	baseFontSize := float32(100) // Base font size
-	breathingSpeed := 1.5       // Controls breathing speed
+	breathingSpeed := 1.5        // Controls breathing speed
 
 	// Calculate the breathing scale factor
 	elapsed := float64(time.Now().UnixNano()) / 1e9 // Time in seconds
@@ -486,13 +536,17 @@ func displayTitleScreen() {
 	currentFontSize := int32(baseFontSize * scaleFactor)
 	titleWidth := rl.MeasureText(title, currentFontSize)
 	positionX := int32(screenSize.X)/2 - (titleWidth / 2)
-	positionY := int32(screenSize.Y)/4 - (currentFontSize / 2)
+	positionY := int32(screenSize.Y)/4 - 100 - (currentFontSize / 2)
+
+	route88.Position = rl.NewVector2(float32(positionX+1025), float32(positionY+250))
+	route88.DrawSprite()
+	route88.updateRouteFrame()
 
 	// Draw the title text with the breathing effect
 	rl.DrawText(title, positionX, positionY, currentFontSize, rl.White)
 	playButton := NewButton(0, 0, 400, 100, 0.1, 0, 0, TITLE, HOWTO)
 	playButton.X = int32(screenSize.X)/2 - playButton.Width/2
-	playButton.Y = int32(screenSize.Y/2.5) - playButton.Height/2
+	playButton.Y = int32(screenSize.Y/7*5) - playButton.Height/2
 	playButton.SetText("Play", 50)
 	playTextWidth := rl.MeasureText(playButton.text, playButton.textSize)
 	rl.DrawText(playButton.text,
@@ -532,8 +586,7 @@ func displayTitleScreen() {
 
 type DialogBox struct {
 	rl.Rectangle
-	text     string
-	textSize float32
+	text string
 }
 
 var dialogCount int = 0
@@ -543,7 +596,6 @@ func displayHowToScreen() {
 	Dialog := DialogBox{
 		Rectangle: rl.NewRectangle(Marty.Position.X-400, Marty.Position.Y-600, 800, 400),
 		text:      "",
-		textSize:  50,
 	}
 
 	if dialogCount == 0 {
@@ -578,36 +630,6 @@ func displayHowToScreen() {
 
 func displayGameOver() {
 
-}
-
-// Helper that decreases velocity
-func applyVelocityDecay(velocity, decaySpeed float32) float32 {
-	if velocity > 0 {
-		velocity -= decaySpeed
-		if velocity < 0 {
-			velocity = 0
-		}
-	} else if velocity < 0 {
-		velocity += decaySpeed
-		if velocity > 0 {
-			velocity = 0
-		}
-	}
-	return velocity
-}
-
-var growthSpeed float32 = 0.5
-
-// Helper that decreases velocity
-func applyVelocityGrowth(velocity, growthSpeed float32) float32 {
-	if velocity < 2 {
-		velocity += growthSpeed
-		if velocity > 2 {
-			velocity = 2
-		}
-	}
-
-	return velocity
 }
 
 // Normalizes a vector to -1 to 1
