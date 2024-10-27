@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"strconv"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -17,6 +18,9 @@ var screenScale = rl.NewVector2((float32(screenSize.X) / float32(initScreenWidth
 
 var backgroundImage rl.Texture2D
 var backgroundScale float32
+var background rl.Texture2D
+var midground rl.Texture2D
+var foreground rl.Texture2D
 
 var vehicleTexture rl.Texture2D
 var frameCount int
@@ -35,10 +39,19 @@ const (
 	EXIT
 )
 
+type Lane int
+
+const (
+	TOP Lane = iota
+	BOTTOM
+)
+
 var currentScreen GameScreen = TITLE
+var currentLane Lane = TOP
 
 var score float32 = 0
 var highScore float32 = 0
+var hasSpawned bool = false
 
 func main() {
 	// Game variable initializations
@@ -50,7 +63,25 @@ func main() {
 	checkResize(&screenSize)
 
 	vehicleTexture = rl.LoadTexture("textures/delorean.png")
-	DeLorean := NewVehicle(vehicleTexture, rl.White, rl.NewVector2(screenSize.X/8*7, screenSize.Y/2-float32(vehicleTexture.Height/2)), rl.NewVector2(0, 0), float32(vehicleTexture.Width), float32(vehicleTexture.Height), 4)
+	projectileTextures := rl.LoadTexture("textures/projectileBullet.png")
+	vehiclePosition := rl.NewVector2(screenSize.X/8*7, screenSize.Y/9*6-float32(vehicleTexture.Height/2))
+	DeLorean := NewVehicle(vehicleTexture, projectileTextures, rl.White, vehiclePosition, rl.NewVector2(0, 0), float32(vehicleTexture.Width), float32(vehicleTexture.Height), 4)
+
+	backgroundImage = rl.LoadTexture("textures/Bright/City3.png")
+	background = rl.LoadTexture("textures/background.png")
+	midground = rl.LoadTexture("textures/middleground.png")
+	foreground = rl.LoadTexture("textures/foreground.png")
+
+	libyanTexture := rl.LoadTexture("textures/enemylibyan.png")
+
+	enemyTextures := []rl.Texture2D{}
+	enemyTextures = append(enemyTextures, libyanTexture)
+
+	enemies := Enemies{}
+
+	var scrollingBack float32 = 0.0
+	var scrollingMid float32 = 0.0
+	var scrollingFore float32 = 0.0
 
 	checkResize(&screenSize)
 	rl.SetTargetFPS(60)
@@ -58,6 +89,20 @@ func main() {
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(theme.backgroundColor)
+
+		scrollingBack -= 1.0
+		scrollingMid -= 8.0
+		scrollingFore -= 8.0
+
+		if scrollingBack <= -float32(background.Width)*backgroundScale {
+			scrollingBack = 0
+		}
+		if scrollingMid <= -float32(midground.Width)*backgroundScale {
+			scrollingMid = 0
+		}
+		if scrollingFore <= -float32(foreground.Width)*backgroundScale {
+			scrollingFore = 0
+		}
 
 		screenSize.X = float32(rl.GetScreenWidth())
 		screenSize.Y = float32(rl.GetScreenHeight())
@@ -71,28 +116,37 @@ func main() {
 		case HOWTO:
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
-			DeLorean.Position = rl.NewVector2(screenSize.X/8*7, screenSize.Y/2-float32(vehicleTexture.Height/2))
-			DeLorean.DrawCharacter()
-			DeLorean.Sprite.SourceRect.X = DeLorean.Sprite.SourceRect.Width * float32(DeLorean.Sprite.SpriteFrame)
-			frameCount++
-			if DeLorean.Sprite.SpriteFrame > 2 {
-				DeLorean.Sprite.SpriteFrame = 0
-				DeLorean.Sprite.SourceRect = rl.NewRectangle(0, 0, 64, 64)
-			}
-			if frameCount%10 == 1 {
-				DeLorean.Sprite.SpriteFrame++
+			// rl.ClearBackground(rl.Black)
 
-			}
-			if frameCount == 30 {
-				frameCount = 0
-			}
+			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
+
+			// Draw midground image twice
+			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
+
+			// Draw foreground image twice
+			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
+
+			// DeLorean.Position = vehiclePosition
+			DeLorean.DrawCharacter()
+			DeLorean.updateFrame()
+			// DeLorean.updateProjectileFrame()
+			DeLorean.move()
+
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				DeLorean.shoot()
 			}
 
+			spawnEnemies(&enemies, &hasSpawned, enemyTextures, &DeLorean)
+			drawEnemies(enemies)
+			moveEnemies(&enemies)
+
 			// if rl.IsKeyPressed(rl.KeySpace) {
 			DeLorean.decreaseSpeed()
 			// }
+			fmt.Println(DeLorean.Position.Y)
 
 			DeLorean.drawBullets()
 			DeLorean.updateBullets()
@@ -111,6 +165,137 @@ func main() {
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
+}
+
+// Spawns bat and zombie entities off screen to the right
+func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture2D, vehicle *Vehicle) {
+	// Gets random number to determine
+	// enemy type and number per spawn occurrence
+	randEnemy := rand.IntN(1)
+	randLane := rand.IntN(2)
+	// laneOffset := 0
+	// if randLane == 1 {
+	// 	laneOffset = 100
+	// }
+
+	// Check the current game time to control enemy spawn frequency
+	if int(rl.GetTime())%8 == 1 {
+		if !*hasSpawned {
+			var sprite rl.Texture2D
+			spawnPosition := rl.NewVector2(-50, float32(730+130*randLane))
+
+			if randEnemy == 0 { // Create bat enemy
+				sprite = enemyTextures[0]
+				// for i := 0; i <= randAmount; i++ {
+				libyan := NewShootingEnemy(sprite, rl.White, spawnPosition, rl.NewVector2(0, 0), 45*screenScale.X, 3*screenScale.X)
+				// libyan.Position = rl.NewVector2(float32(libyan.XOffset), vehicle.Position.Y)
+				enemies.Shooting = append(enemies.Shooting, libyan)
+				// }
+			}
+			// } else { // Create zombie enemy
+			// 	sprite = enemyTextures[1]
+			// 	for i := 0; i <= randAmount; i++ {
+			// 		zombie := NewZombie(sprite, rl.White, initSpawnPosition, rl.NewVector2(0, 0), 60*screenScale.X, 6*screenScale.X)
+			// 		zombie.Body.Position = rl.NewVector2(float32(zombie.XOffset), float32(zombie.YOffset))
+			// 		enemies.Zombies = append(enemies.Zombies, zombie)
+			// 	}
+			// }
+
+			// Ensures spawning only happens one frame per 2 seconds,
+			// not every frame in one second per 2 seconds
+			*hasSpawned = true
+		}
+	} else {
+		*hasSpawned = false
+	}
+}
+
+// Displays enemies to screen
+func drawEnemies(enemies Enemies) {
+	for _, libyan := range enemies.Shooting {
+		libyan.DrawSprite()
+	}
+	// for _, zombies := range enemies.Zombies {
+	// 	zombies.Draw()
+	// }
+}
+
+func moveEnemies(enemies *Enemies) {
+	// move each bat in slice
+	for i := range enemies.Shooting {
+		libyan := &enemies.Shooting[i]
+		libyan.Body.Velocity.X = 150
+		// if !libyan.IsDeflecting {
+		// 	direction := rl.Vector2Subtract(knight.Body.Position, bat.Body.Position)
+		// 	direction = normalizeVector(direction)
+		// 	bat.Body.Velocity.X = direction.X * 150
+		// 	bat.Body.Velocity.Y = direction.Y * 150
+		// } else {
+		// 	bat.DeflectTime += rl.GetFrameTime()
+		// 	decaySpeed := rl.NewVector2(float32(math.Abs(float64(bat.Body.Velocity.X*25))*float64(rl.GetFrameTime())),
+		// 		float32(math.Abs(float64(bat.Body.Velocity.Y*5))*float64(rl.GetFrameTime())))
+		// 	bat.Body.Velocity.X = applyVelocityDecay(bat.Body.Velocity.X, decaySpeed.X)
+		// 	// Y velocity is not changed
+
+		// 	if bat.DeflectTime >= deflectDuration {
+		// 		bat.IsDeflecting = false
+		// 		bat.DeflectTime = 0
+		// 	}
+		// }
+
+		libyan.PhysicsUpdate()
+	}
+
+	// // move each zombie in slice
+	// for i := range enemies.Zombies {
+	// 	zombie := &enemies.Zombies[i]
+	// 	if !zombie.IsDeflecting {
+	// 		direction := rl.Vector2Subtract(knight.Body.Position, zombie.Body.Position)
+	// 		direction = normalizeVector(direction)
+	// 		(*zombie).Body.Velocity.X = direction.X * 300
+	// 		(*zombie).Body.Velocity.Y = direction.Y * 150
+	// 	} else {
+	// 		zombie.DeflectTime += rl.GetFrameTime()
+	// 		decaySpeed := rl.NewVector2(float32(math.Abs(float64(zombie.Body.Velocity.X*25))*float64(rl.GetFrameTime())),
+	// 			float32(math.Abs(float64(zombie.Body.Velocity.Y*5))*float64(rl.GetFrameTime())))
+	// 		zombie.Body.Velocity.X = applyVelocityDecay(zombie.Body.Velocity.X, decaySpeed.X)
+	// 		// Y velocity is not changed
+
+	// 		if zombie.DeflectTime >= deflectDuration {
+	// 			zombie.IsDeflecting = false
+	// 			zombie.DeflectTime = 0
+	// 		}
+	// 	}
+
+	// 	zombie.Body.PhysicsUpdate()
+	// }
+}
+
+// Handles player and enemy collision, and applies damage and despawns enemy if so
+func checkEnemyPlayerCollision(enemies *Enemies, DeLorean *Vehicle, knightRect rl.Rectangle) {
+	for i := len(enemies.Shooting) - 1; i >= 0; i-- {
+		libyan := &enemies.Shooting[i]
+		if rl.CheckCollisionCircleRec(libyan.Position, libyan.Body.Radius, knightRect) {
+			// rl.PlaySound(audio.Sounds["damaged"])
+			// knight.Health -= bat.Damage
+			// knight.Health = rl.Clamp(knight.Health, 0, 100)
+			// *healthTracker = knight.Health / 100
+
+			enemies.Shooting = append(enemies.Shooting[:i], enemies.Shooting[i+1:]...) // Remove Enemy after collision
+		}
+	}
+
+	// for i := len(enemies.Zombies) - 1; i >= 0; i-- {
+	// 	zombie := &enemies.Zombies[i]
+	// 	if rl.CheckCollisionCircleRec(zombie.Body.Position, zombie.Body.Radius, knightRect) {
+	// 		audio.playWithRandPitch(audio.Sounds["damaged"])
+	// 		knight.Health -= zombie.Damage
+	// 		knight.Health = rl.Clamp(knight.Health, 0, 100)
+	// 		*healthTracker = knight.Health / 100
+
+	// 		enemies.Zombies = append(enemies.Zombies[:i], enemies.Zombies[i+1:]...) // Remove Enemy after collision
+	// 	}
+	// }
 }
 
 // Implements title screen and UI elements
