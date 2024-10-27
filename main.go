@@ -18,6 +18,10 @@ var screenSize rl.Vector2 = rl.NewVector2(float32(initScreenWidth), float32(init
 var screenScale = rl.NewVector2((float32(screenSize.X) / float32(initScreenWidth)),
 	(float32(screenSize.Y) / float32(initScreenHeight)))
 
+// type Background struct {
+// 	b
+// }
+
 var backgroundImage rl.Texture2D
 var backgroundScale float32
 var background rl.Texture2D
@@ -42,6 +46,13 @@ const (
 	HYPERJUMP
 	GAMEOVER
 	EXIT
+)
+
+type Background int
+
+const (
+	CITY Background = iota
+	PREHISTORIC
 )
 
 type Lane int
@@ -77,8 +88,12 @@ func main() {
 	Marty = renderer.NewStillSprite(rl.NewVector2(screenSize.X/2-float32(martyTexture.Width)/2, screenSize.Y/6*4-float32(martyTexture.Height)/2), martyTexture, rl.White, 0, 7)
 
 	backgroundImage = rl.LoadTexture("textures/Bright/City3.png")
+	// backgroundImage = append(backgroundImage, rl.LoadTexture("textures/Bright/City3.png"))
+	// background = append(background, rl.LoadTexture("textures/background.png"))
 	background = rl.LoadTexture("textures/background.png")
+	// midground = append(midground, rl.LoadTexture("textures/middleground.png"))
 	midground = rl.LoadTexture("textures/middleground.png")
+	// foreground = append(foreground, rl.LoadTexture("textures/foreground.png"))
 	foreground = rl.LoadTexture("textures/foreground.png")
 
 	libyanTexture := rl.LoadTexture("textures/enemylibyan.png")
@@ -165,6 +180,7 @@ func main() {
 			enemies.updateEnemyFrame()
 			drawProjectiles(&enemies, &DeLorean)
 			updateProjectiles(&enemies, &DeLorean, vehicleRect)
+			nextHyperjump(&DeLorean)
 			// for i := range.
 			// }
 			// fmt.Println(DeLorean.Position.Y)
@@ -189,6 +205,22 @@ func main() {
 	rl.CloseWindow()
 }
 
+func nextHyperjump(DeLorean *Vehicle) {
+	if DeLorean.Hyperjump {
+		fmt.Println("Ready to Jump")
+		if rl.IsKeyPressed(rl.KeySpace) {
+			if Background == CITY {
+				background = rl.LoadTexture("textures/background-prehistoric.png")
+				midground = rl.LoadTexture("textures/middleground-prehistoric.png")
+				foreground = rl.LoadTexture("textures/foreground-prehistoric.png")
+				backgroundImage = rl.LoadTexture("textures/backgroundImage2.png")
+				DeLorean.Hyperjump = false
+			}
+		}
+
+	}
+}
+
 // Spawns bat and zombie entities off screen to the right
 func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture2D, vehicle *Vehicle) {
 	// Gets random number to determine
@@ -201,7 +233,7 @@ func spawnEnemies(enemies *Enemies, hasSpawned *bool, enemyTextures []rl.Texture
 	// }
 
 	// Check the current game time to control enemy spawn frequency
-	if int(rl.GetTime())%3 == 1 {
+	if int(rl.GetTime())%2 == 1 {
 		if !*hasSpawned {
 			var sprite rl.Texture2D
 			spawnPosition := rl.NewVector2(-50, float32(750+130*randLane))
@@ -311,7 +343,7 @@ func shootProjectile(enemies *Enemies, DeLorean *Vehicle) {
 			libyan.shootTimer = 0
 
 			// Assign a new random shoot interval between 3 and 5 seconds
-			libyan.shootInterval = 3.0 + rand.Float32()*2.0
+			libyan.shootInterval = 2.0
 		}
 	}
 }
@@ -485,7 +517,7 @@ func displayHowToScreen() {
 			"Press LEFT MOUSE BUTTON to shoot\n" +
 			"Press W to move one lane up\n" +
 			"Press S to move one lane down\n\n" +
-			"Once 88 MPH has been reached,\n" +
+			"Once 88 MPH have been reached,\n" +
 			"press SPACEBAR to begin the\n" +
 			"hyperjump sequence!"
 	} else if dialogCount == 2 {

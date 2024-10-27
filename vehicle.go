@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"main/physics"
 	"main/renderer"
 	"math"
@@ -211,29 +210,29 @@ func (vehicle *Vehicle) increaseSpeed() {
 		// vehicle.Speed += rl.GetFrameTime() * 2.5
 		vehicle.Acceleration = rl.Clamp(vehicle.Acceleration+0.5*rl.GetFrameTime(), 0, 12)
 		// fmt.Println(vehicle.Acceleration)
-		vehicle.Speed = rl.Clamp(vehicle.Speed+rl.GetFrameTime()*vehicle.Acceleration, 0, 200)
+		vehicle.Speed = rl.Clamp(vehicle.Speed+rl.GetFrameTime()*vehicle.Acceleration, 0, 88)
 	}
 	if vehicle.Speed >= 88 {
 		vehicle.Hyperjump = true
 	}
 }
 
-func (vehicle *Vehicle) nextHyperjump() {
-	if vehicle.Hyperjump {
-		fmt.Println("Ready to Jump")
-		if rl.IsKeyPressed(rl.KeySpace) {
-			vehicle.Hyperjump = false
-		}
+// func (vehicle *Vehicle) nextHyperjump() {
+// 	if vehicle.Hyperjump {
+// 		fmt.Println("Ready to Jump")
+// 		if rl.IsKeyPressed(rl.KeySpace) {
+// 			vehicle.Hyperjump = false
+// 		}
 
-	}
-}
+// 	}
+// }
 
 func (vehicle *Vehicle) decreaseSpeed() {
-	if rl.IsKeyPressed(rl.KeySpace) {
-		vehicle.SlowingDown = true
-	}
+	// if rl.IsKeyPressed(rl.KeySpace) {
+	// 	vehicle.SlowingDown = true
+	// }
 	if vehicle.SlowingDown {
-		vehicle.Speed -= 25
+		vehicle.Speed -= 15
 		vehicle.Acceleration = rl.Clamp(vehicle.Acceleration/2, 2, 8)
 		vehicle.SlowingDown = false
 	}
