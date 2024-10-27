@@ -12,8 +12,8 @@ import (
 )
 
 // Global Variables
-var initScreenWidth int32 = 1920
-var initScreenHeight int32 = 1080
+var initScreenWidth int32 = 1600
+var initScreenHeight int32 = 900
 var screenSize rl.Vector2 = rl.NewVector2(float32(initScreenWidth), float32(initScreenHeight))
 var screenScale = rl.NewVector2((float32(screenSize.X) / float32(initScreenWidth)),
 	(float32(screenSize.Y) / float32(initScreenHeight)))
@@ -70,6 +70,7 @@ var highScore float32 = 0
 var hasSpawned bool = false
 var vehicleRect rl.Rectangle
 var hyperjump bool
+var hudColor rl.Color = rl.NewColor(0, 0, 0, 128)
 
 func main() {
 	// Game variable initializations
@@ -136,10 +137,34 @@ func main() {
 		checkResize(&screenSize)
 
 		switch currentScreen {
-		case TITLE: // Title Screen State
+			case TITLE: 
+			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
+		
+			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
+		
+			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
+		
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
 			displayTitleScreen()
 			audio.checkMute()
 		case HOWTO:
+
+			rl.DrawTextureEx(background, rl.NewVector2(scrollingBack, -20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(background, rl.NewVector2(float32(background.Width)*backgroundScale+scrollingBack, 0), 0.0, backgroundScale, rl.White)
+
+			// Draw midzground image twice
+			rl.DrawTextureEx(midground, rl.NewVector2(scrollingMid, 20), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(midground, rl.NewVector2(float32(midground.Width)*backgroundScale+scrollingMid, 20), 0.0, backgroundScale, rl.White)
+
+			// Draw foreground image twice
+			rl.DrawTextureEx(foreground, rl.NewVector2(scrollingFore, 0), 0.0, backgroundScale, rl.White)
+			rl.DrawTextureEx(foreground, rl.NewVector2(float32(foreground.Width)*backgroundScale+scrollingFore, 0), 0.0, backgroundScale, rl.White)
+			
+			rl.DrawRectangle(0, 0, int32(screenSize.X), int32(screenSize.Y), hudColor) 
+
 			displayHowToScreen()
 		case GAMEPLAY: // Main Game Loop State
 			// rl.ClearBackground(rl.Black)
