@@ -41,62 +41,6 @@ type Shooting struct {
 	shootInterval float32
 }
 
-// func NewEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Velocity rl.Vector2, Radius float32, Scale float32) Enemy {
-// 	enemy := Enemy{
-// 		Body: physics.CircleBody{
-// 			Velocity: Velocity,
-// 			Radius:   Radius,
-// 			Angle:    0,
-// 		},
-// 		Sprite: renderer.CharacterSprite{
-// 			Render: renderer.SpriteRenderer{
-// 				Sprite: Sprite,
-// 				Color:  Color,
-// 				Angle:  0,
-// 				Scale:  Scale,
-// 			},
-// 			SourceRect:  rl.NewRectangle(0, 0, 64, 64),
-// 			IsMoving:    false,
-// 			SpriteFrame: 0,
-// 		},
-// 		Position:     Position,
-// 		Health:       100,
-// 		IsDeflecting: false,
-// 		DeflectTime:  0,
-// 		XOffset:      -50 - int32(rand.Int32N(250)),
-// 		YOffset:      int32(screenSize.Y) - (int32(rand.Int32N(int32(200*screenScale.Y)) + 100)),
-// 	}
-
-// 	return enemy
-// }
-
-// // Initializes Zombie entity
-// func NewZombie(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Velocity rl.Vector2, Radius float32, Scale float32) Zombie {
-// 	Zombie := Zombie{
-// 		Enemy: Enemy{
-// 			Body: physics.CircleBody{
-// 				Position: Position,
-// 				Velocity: Velocity,
-// 				Radius:   Radius,
-// 				Angle:    0,
-// 			},
-// 			Sprite: renderer.SpriteRenderer{
-// 				Sprite: Sprite,
-// 				Color:  Color,
-// 				Scale:  Scale,
-// 			},
-// 			Damage:       10,
-// 			Health:       100,
-// 			IsDeflecting: false,
-// 			DeflectTime:  0,
-// 			DropChance:   rand.Float32(),
-// 			XOffset:      int32(screenSize.X) + 50 + int32(rand.Int32N(250)),
-// 			YOffset:      int32(screenSize.Y) - (int32(rand.Int32N(int32(200*screenScale.Y)) + 100)),
-// 		},
-// 	}
-// 	return Zombie
-// }
-
 // Initializes Bat entity
 func NewShootingEnemy(Sprite rl.Texture2D, Color rl.Color, Position rl.Vector2, Velocity rl.Vector2, Radius float32, Scale float32, Lane Lane) Shooting {
 	newShooting := Shooting{
@@ -206,24 +150,3 @@ func (enemies *Enemies) updateEnemyFrame() {
 	}
 
 }
-
-// func (enemy *Enemy) getRectHitbox() rl.Rectangle {
-// 	Scale := enemy.Sprite.Render.Scale
-// 	X := enemy.Position.X
-// 	Y := enemy.Position.Y
-// 	Width := enemy.Body.Width
-// 	Height := enemy.Body.Height
-
-// 	scaledX := (X - (Width*Scale)/2) + 5*Scale
-// 	scaledY := Y - (Height*Scale)/2 + 50*Scale
-// 	scaledWidth := (Width * Scale) - 100*Scale
-// 	scaledHeight := Height*Scale - 20*Scale
-
-// 	hitBoxRect := rl.NewRectangle(scaledX, scaledY, scaledWidth, scaledHeight)
-// 	// rl.DrawRectangle(int32(hitBoxRect.X), int32(hitBoxRect.Y), int32(hitBoxRect.Width), int32(hitBoxRect.Height), rl.White)
-// 	return hitBoxRect
-// }
-
-// func (enemy *Enemy) Draw() {
-// 	renderer.DrawCircleEntity(enemy.Position, &enemy.Sprite, enemy.Body.Angle)
-// }

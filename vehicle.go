@@ -108,23 +108,6 @@ func (vehicle *Vehicle) shoot() {
 	} else if angleInDegrees >= 0 {
 		offset.X += 50
 	}
-	// // if 0 <= angleInDegrees && angleInDegrees < 90 {
-	// 	projOffset = rl.NewVector2(offset.X+50, offset.Y-50)
-	// 	fmt.Println(1)
-	// }
-	// if 90 <= angleInDegrees && angleInDegrees < 180 {
-	// 	projOffset = rl.NewVector2(offset.X-30, offset.Y+70)
-	// 	fmt.Println(2)
-	// }
-	// if -90 <= angleInDegrees && angleInDegrees < 1 {
-	// 	projOffset = rl.NewVector2(offset.X-50, offset.Y+150)
-	// 	fmt.Println(3)
-
-	// }
-	// if -180 <= angleInDegrees && angleInDegrees < -90 {
-	// 	projOffset = rl.NewVector2(offset.X-80, offset.Y+30)
-	// 	fmt.Println(4)
-	// }
 	newBullet := Projectile{
 		Body:     physics.NewCirclePhysicsBody(vehicle.BulletVelocity, 20, 0),
 		Position: offset,
@@ -132,24 +115,6 @@ func (vehicle *Vehicle) shoot() {
 		Color:    rl.White,
 		Lane:     vehicle.Lane,
 	}
-	// newBullet := SpriteProjectile{
-	// 	Body: physics.NewCirclePhysicsBody(vehicle.BulletVelocity, 30, 0),
-	// 	Sprite: renderer.CharacterSprite{
-	// 		Render: renderer.SpriteRenderer{
-	// 			Sprite: vehicle.BulletSprite,
-	// 			Color:  rl.White,
-	// 			Angle:  float32(angleInDegrees),
-	// 			Scale:  1,
-	// 		},
-	// 		SourceRect:  rl.NewRectangle(0, 0, 22, 22),
-	// 		IsMoving:    false,
-	// 		SpriteFrame: 0,
-	// 	},
-	// 	Position: offset,
-	// 	Speed:    700,
-	// 	Color:    rl.White,
-	// }
-	// new
 	if newBullet.Lane == TOP {
 		newBullet.Color = rl.SkyBlue
 	} else {
@@ -166,9 +131,6 @@ func (vehicle *Vehicle) shoot() {
 func (vehicle *Vehicle) drawBullets() {
 	for i := len(vehicle.Bullets) - 1; i >= 0; i-- {
 		bullet := &(vehicle.Bullets)[i]
-		// bullet.DrawSprite()
-		// bullet.Lane = vehicle.Lane
-		// bullet.Lane !
 		if bullet.Lane == TOP {
 			bullet.Color = rl.SkyBlue
 		} else {
@@ -216,16 +178,6 @@ func (vehicle *Vehicle) increaseSpeed() {
 		vehicle.Hyperjump = true
 	}
 }
-
-// func (vehicle *Vehicle) nextHyperjump() {
-// 	if vehicle.Hyperjump {
-// 		fmt.Println("Ready to Jump")
-// 		if rl.IsKeyPressed(rl.KeySpace) {
-// 			vehicle.Hyperjump = false
-// 		}
-
-// 	}
-// }
 
 func (vehicle *Vehicle) decreaseSpeed() {
 	// if rl.IsKeyPressed(rl.KeySpace) {
@@ -295,27 +247,6 @@ func (vehicle *Vehicle) getRectHitbox() rl.Rectangle {
 	// rl.DrawRectangle(int32(hitBoxRect.X), int32(hitBoxRect.Y), int32(hitBoxRect.Width), int32(hitBoxRect.Height), rl.White)
 	return hitBoxRect
 }
-
-// func (vehicle *Vehicle) updateProjectileFrame() {
-// 	for i := len(vehicle.Bullets) - 1; i >= 0; i-- {
-// 		bullet := &(vehicle.Bullets)[i]
-
-// 		bullet.Sprite.SourceRect.X = bullet.Sprite.SourceRect.Width * float32(bullet.Sprite.SpriteFrame)
-// 		if bullet.Sprite.SpriteFrame < 4 {
-// 			// bullet.Sprite.SpriteFrame = 4
-// 			// bullet.Sprite.SourceRect = rl.NewRectangle(0, 0, 32, 22)
-// 			if frameCount%18 == 1 {
-// 				bullet.Sprite.SpriteFrame++
-
-// 			}
-// 		}
-// 		// if frameCount%18 == 1 {
-// 		// 	bullet.Sprite.SpriteFrame++
-
-// 		// }
-// 	}
-
-// }
 
 func (vehicle *Vehicle) move() {
 	if currentLane != BOTTOM && (rl.IsKeyPressed(rl.KeyS) || rl.IsKeyPressed(rl.KeyDown)) {

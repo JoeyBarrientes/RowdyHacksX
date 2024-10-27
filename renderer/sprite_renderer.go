@@ -60,23 +60,6 @@ func DrawRectEntity(position rl.Vector2, renderer *SpriteRenderer, Width, Height
 	renderer.Draw(position, angle)
 }
 
-// func DrawCircleEntity(position rl.Vector2, renderer *CharacterSprite, angle float32) {
-// 	renderer.Draw(position, angle)
-// 	// renderer.DrawCircleBoundary(body.Position, body.Radius)
-// }
-
-// Display entity with circle hit box
-// func DrawCircleEntity(position rl.Vector2, renderer *SpriteRenderer, angle float32) {
-// 	renderer.Draw(position, angle)
-// 	// renderer.DrawCircleBoundary(body.Position, body.Radius)
-// }
-
-// Display entity with circle hit box
-// func DrawCircleEntity(position rl.Vector2, renderer *CharacterSprite, angle float32) {
-// 	renderer.Draw(position, angle)
-// 	// renderer.DrawCircleBoundary(body.Position, body.Radius)
-// }
-
 func (renderer *SpriteRenderer) DrawCircleBoundary(Position rl.Vector2, Radius float32) {
 	rl.DrawCircleLines(int32(Position.X), int32(Position.Y), Radius, rl.SkyBlue)
 }

@@ -326,9 +326,6 @@ func drawEnemies(enemies Enemies) {
 	for _, libyan := range enemies.Shooting {
 		libyan.DrawSprite()
 	}
-	// for _, zombies := range enemies.Zombies {
-	// 	zombies.Draw()
-	// }
 }
 
 func moveEnemies(enemies *Enemies) {
@@ -339,29 +336,6 @@ func moveEnemies(enemies *Enemies) {
 		libyan.PhysicsUpdate()
 	}
 
-	// // move each zombie in slice
-	// for i := range enemies.Zombies {
-	// 	zombie := &enemies.Zombies[i]
-	// 	if !zombie.IsDeflecting {
-	// 		direction := rl.Vector2Subtract(knight.Body.Position, zombie.Body.Position)
-	// 		direction = normalizeVector(direction)
-	// 		(*zombie).Body.Velocity.X = direction.X * 300
-	// 		(*zombie).Body.Velocity.Y = direction.Y * 150
-	// 	} else {
-	// 		zombie.DeflectTime += rl.GetFrameTime()
-	// 		decaySpeed := rl.NewVector2(float32(math.Abs(float64(zombie.Body.Velocity.X*25))*float64(rl.GetFrameTime())),
-	// 			float32(math.Abs(float64(zombie.Body.Velocity.Y*5))*float64(rl.GetFrameTime())))
-	// 		zombie.Body.Velocity.X = applyVelocityDecay(zombie.Body.Velocity.X, decaySpeed.X)
-	// 		// Y velocity is not changed
-
-	// 		if zombie.DeflectTime >= deflectDuration {
-	// 			zombie.IsDeflecting = false
-	// 			zombie.DeflectTime = 0
-	// 		}
-	// 	}
-
-	// 	zombie.Body.PhysicsUpdate()
-	// }
 }
 
 // rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height))
@@ -448,27 +422,11 @@ func checkEnemyPlayerCollision(enemies *Enemies, DeLorean *Vehicle, vehicleRect 
 			libyan.Sprite.Render.Color = rl.DarkGray
 		}
 		if rl.CheckCollisionCircleRec(rl.NewVector2(libyan.Position.X-float32(libyan.Sprite.Render.Sprite.Width/5*4), libyan.Position.Y+float32(libyan.Sprite.Render.Sprite.Height)), libyan.Body.Radius, vehicleRect) && (libyan.Lane == DeLorean.Lane) {
-			// rl.PlaySound(audio.Sounds["damaged"])
-			// knight.Health -= bat.Damage
-			// knight.Health = rl.Clamp(knight.Health, 0, 100)
-			// *healthTracker = knight.Health / 100
 			DeLorean.SlowingDown = true
 
 			enemies.Shooting = append(enemies.Shooting[:i], enemies.Shooting[i+1:]...) // Remove Enemy after collision
 		}
 	}
-
-	// for i := len(enemies.Zombies) - 1; i >= 0; i-- {
-	// 	zombie := &enemies.Zombies[i]
-	// 	if rl.CheckCollisionCircleRec(zombie.Body.Position, zombie.Body.Radius, knightRect) {
-	// 		audio.playWithRandPitch(audio.Sounds["damaged"])
-	// 		knight.Health -= zombie.Damage
-	// 		knight.Health = rl.Clamp(knight.Health, 0, 100)
-	// 		*healthTracker = knight.Health / 100
-
-	// 		enemies.Zombies = append(enemies.Zombies[:i], enemies.Zombies[i+1:]...) // Remove Enemy after collision
-	// 	}
-	// }
 }
 
 // Handles reflected projectile and bat collision, despawns them, and chance of food spawn
@@ -487,13 +445,6 @@ func checkEnemyProjectileCollision(enemies *Enemies, DeLorean *Vehicle) {
 		}
 	}
 }
-
-// func checkBulletCollision(enemies *Enemies, DeLorean *Vehicle){
-// 		for i := len(enemies.Shooting) - 1; i >= 0; i-- {
-// 		libyan := &enemies.Shooting[i]
-// 		for j := len(DeLorean.Bullets) - 1; j >= 0; j-- {
-// 			bullet := &(DeLorean.Bullets)[j]
-// }
 
 func (route *Route) DrawSprite() {
 	destRect := rl.NewRectangle(route.Position.X, route.Position.Y, 100*route.Render.Scale, 100*route.Render.Scale)
@@ -516,10 +467,6 @@ func (route *Route) updateRouteFrame() {
 		route.SpriteFrame++
 
 	}
-	// if frameCount%18 == 1 {
-	// 	bullet.Sprite.SpriteFrame++
-
-	// }
 }
 
 // Implements title screen and UI elements
@@ -555,16 +502,6 @@ func displayTitleScreen() {
 		playButton.textSize,
 		rl.White,
 	)
-
-	// howToButton := NewButton(playButton.X, playButton.Y+150, 400, 100, 0.1, 0, 0, TITLE, HOWTO)
-	// howToButton.SetText("How To Play", 50)
-	// howToTextWidth := rl.MeasureText(howToButton.text, howToButton.textSize)
-	// rl.DrawText(howToButton.text,
-	// 	howToButton.X+(howToButton.Width/2)-(howToTextWidth/2),
-	// 	howToButton.Y+(howToButton.Height/2)-(howToButton.textSize/2),
-	// 	howToButton.textSize,
-	// 	rl.White,
-	// )
 
 	exitButton := NewButton(playButton.X, playButton.Y+150, 400, 100, 0.1, 0, 0, TITLE, EXIT)
 	exitButton.SetText("Exit", 50)
